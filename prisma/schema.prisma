@@ -13,3 +13,49 @@ model User {
   name  String?
 }
 
+
+model Pokemon {
+  id          Int    @id
+  name        String
+  height      Float
+  weight      Float
+  imageUrl    String
+  types       Type[]
+  abilities   Ability[]
+  stats       Stats
+  moves       Move[]
+}
+
+model Type {
+  id          Int    @id
+  name        String
+  pokemon     Pokemon[]   @relation(fields: [pokemonId], references: [id])
+  pokemonId   Int
+}
+
+model Ability {
+  id          Int    @id
+  name        String
+  pokemon     Pokemon[]   @relation(fields: [pokemonId], references: [id])
+  pokemonId   Int
+}
+
+model Stats {
+  id          Int    @id
+  hp          Int
+  attack      Int
+  defense     Int
+  specialAttack  Int
+  specialDefense Int
+  speed       Int
+  pokemon     Pokemon   @relation(fields: [pokemonId], references: [id])
+  pokemonId   Int
+}
+
+model Move {
+  id          Int    @id
+  name        String
+  pokemon     Pokemon[]   @relation(fields: [pokemonId], references: [id])
+  pokemonId   Int
+}
+
