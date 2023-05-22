@@ -1,7 +1,7 @@
 {
-  "name": "backend-boilerplate",
+  "name": "pokemarket-backend",
   "version": "1.0.0",
-  "description": "",
+  "description": "api rest for proyect PokeMarket",
   "main": "index.ts",
   "scripts": {
     "start": "npx nodemon index.ts",
@@ -11,7 +11,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@prisma/client": "^4.11.0",
     "body-parser": "^1.20.2",
     "cors": "^2.8.5",
     "dotenv": "^16.0.3",
@@ -19,8 +18,7 @@
     "express-jwt": "^7.7.7",
     "jwks-rsa": "^3.0.0",
     "mongoose": "^7.1.0",
-    "nodemon": "^2.0.21",
-    "prisma": "^4.11.0"
+    "nodemon": "^2.0.21"
   },
   "devDependencies": {
     "@types/body-parser": "^1.19.2",
