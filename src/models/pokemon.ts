@@ -1,7 +1,7 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose";
 import { User } from "./user";
 
-export interface IPokemon extends Document{
+export interface IPokemon extends Document {
   claimLovePotion(): Promise<number>;
   p2pSell(price: number): Promise<number>;
   directSell(): Promise<number>;
@@ -11,6 +11,7 @@ export interface IPokemon extends Document{
     id: string;
     levels: { experience: number; level: number }[];
   };
+  onSaleDate?: Date;
   owner?: ObjectId;
   name: string;
   createdDate: Date;
@@ -21,11 +22,11 @@ export interface IPokemon extends Document{
   baseExperience: number;
   species: string;
   abilities: { name: string; url: string }[];
-  stats: IStats
+  stats: IStats;
   isTraining?: { training: boolean; trainingStartDate: Date };
   moves: { name: string; url: string }[];
   onSale?: boolean;
-  pokeApiId?: number;
+  pokeApiId: number;
   price?: number | boolean | undefined | null;
   evolvesTo: ObjectId[];
   varieties: ObjectId[];
@@ -40,29 +41,33 @@ export interface IPokemon extends Document{
   shape: { name: string; url: string };
   color: { name: string; url: string };
   eggGroups: { name: string; url: string }[];
-  minLevelToEvolve?: number;
   isEgg: boolean;
   isShiny: boolean;
   lastLovePotion: Date;
+  baseStats: IStats;
+  default: boolean;
+  levelToEvolve?: number
 }
 
 export interface IStats {
-  hp: number,
-  attack: number,
-  defense: number,
-  specialAttack: number,
-  specialDefense: number,
-  speed: number,
+  hp: number;
+  attack: number;
+  defense: number;
+  specialAttack: number;
+  specialDefense: number;
+  speed: number;
 }
 
-
-const pokemonSchema: Schema<IPokemon>= new mongoose.Schema({
+const pokemonSchema: Schema<IPokemon> = new mongoose.Schema({
   owner: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+  onSaleDate: { type: Date },
+  default: { type: Boolean, default: true },
   name: { type: String, required: true },
   createdDate: { type: Date, default: Date.now },
   height: { type: Number, required: true },
   weight: { type: Number, required: true },
   images: { default: { type: String }, shiny: { type: String } },
+  pokeApiId: { type: Number },
   types: [
     {
       name: { type: String, required: true },
@@ -112,8 +117,6 @@ const pokemonSchema: Schema<IPokemon>= new mongoose.Schema({
     },
   ],
   onSale: { type: Boolean, default: false },
-  id: { type: Number },
-  pokeApiId: { type: Number },
   price: { type: Number },
   evolvesTo: [{ type: mongoose.Schema.Types.ObjectId, ref: "Pokemon" }],
   varieties: [
@@ -131,7 +134,6 @@ const pokemonSchema: Schema<IPokemon>= new mongoose.Schema({
   shape: { name: { type: String }, url: { type: String } },
   color: { name: { type: String }, url: { type: String } },
   eggGroups: [{ type: String }],
-  minLevelToEvolve: { type: Number },
   growthRate: {
     formula: { type: String },
     name: { type: String },
@@ -143,6 +145,15 @@ const pokemonSchema: Schema<IPokemon>= new mongoose.Schema({
   generation: { type: String },
   isShiny: { type: Boolean, default: false },
   isEgg: { type: Boolean, default: false },
+  baseStats: {
+    hp: { type: Number, required: true },
+    attack: { type: Number, required: true },
+    defense: { type: Number, required: true },
+    specialAttack: { type: Number, required: true },
+    specialDefense: { type: Number, required: true },
+    speed: { type: Number, required: true },
+  },
+  levelToEvolve: { type: Number },
 });
 
 pokemonSchema.methods.uploadExp = function (exp: number) {
@@ -167,6 +178,8 @@ pokemonSchema.methods.directSell = async function () {
   else if (this.isMythical) newPrice = newPrice * 50;
   else newPrice = newPrice * 10;
   this.price = Math.floor(newPrice * 2);
+  const currentDate = new Date()
+  this.onSaleDate = currentDate
   await this.save();
   return Math.floor(newPrice);
 };
@@ -174,12 +187,14 @@ pokemonSchema.methods.directSell = async function () {
 pokemonSchema.methods.p2pSell = async function (price: string) {
   this.onSale = true;
   this.price = price;
+  const currentDate = new Date()
+  this.onSaleDate = currentDate
   await this.save();
   return price;
 };
 
 pokemonSchema.methods.claimLovePotion = async function () {
-  const {hp, attack, defense, speed} = this.stats
+  const { hp, attack, defense, speed } = this.stats;
   const now = new Date();
   const lastClaim = new Date(this.lastLovePotion);
   const timeDiff = now.getTime() - lastClaim.getTime();
@@ -190,7 +205,7 @@ pokemonSchema.methods.claimLovePotion = async function () {
   const potionsToGive = Math.floor(
     hoursDiff * (statsValue / 10) * rarityMultiplier
   ); // Multiplicar el tiempo por el valor de las estadísticas y la rareza, y redondear hacia abajo
-  console.log(potionsToGive, 'potions')
+  console.log(potionsToGive, "potions");
   if (potionsToGive > 0) {
     this.lastLovePotion = now;
     this.save();
@@ -205,7 +220,7 @@ export const growthRateTable = {
   fast: 1.7,
   "medium-slow": 1.5,
   "slow-then-very-fast": 1.4,
-  "fast-then-very-slow":  1.3,
-}
+  "fast-then-very-slow": 1.3,
+};
 
 export const Pokemon = mongoose.model("Pokemon", pokemonSchema);

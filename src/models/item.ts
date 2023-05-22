@@ -1,7 +1,7 @@
 import mongoose, { Document, ObjectId, Schema } from "mongoose";
 import { IStats, Pokemon, growthRateTable } from "./pokemon";
 
-export interface Item  extends Document{
+export interface Item extends Document {
   name: string;
   description: string;
   image: string;
@@ -26,23 +26,26 @@ const useLovePotion = async function (pokemonId: string, count: number) {
     if (!expToNextLevel) throw new Error("Pokemon are in max level");
     const newExp = pokemon.exp + 50 * count;
     if (newExp >= expToNextLevel) {
-      const growthRateValue = growthRateTable[pokemon.growthRate.name as keyof typeof growthRateTable];
+      const growthRateValue =
+        growthRateTable[
+          pokemon.growthRate.name as keyof typeof growthRateTable
+        ];
       pokemon.level = pokemon.growthRate.levels
         .filter((e) => e.experience <= newExp)
         .slice(-1)[0].level;
       let newStats = pokemon.stats;
+      const modificador = pokemon.isMythical ? 5 : pokemon.isLegendary ? 2 : 1
       Object.keys(pokemon.stats).forEach((stat) => {
-        const baseStat = pokemon.stats[stat as keyof IStats]
+        const baseStat = pokemon.stats[stat as keyof IStats];
         const newStat = Math.floor(
-          (((2 * baseStat + 31) * pokemon.level) / 100 + 5) *
-          growthRateValue
-        );
+          (((2 * baseStat + 31 + 252 / 4) * pokemon.level) / 100 + 5) * modificador
+        ) + pokemon.baseStats[stat as keyof IStats];
         newStats[stat as keyof IStats] = newStat;
-    })
-    pokemon.stats = newStats
-  }
-  pokemon.exp = newExp;
-  return await pokemon.save();
+      });
+      pokemon.stats = newStats;
+    }
+    pokemon.exp = newExp;
+    return await pokemon.save();
   } catch (error) {
     return error;
   }

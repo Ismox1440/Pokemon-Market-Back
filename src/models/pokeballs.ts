@@ -8,6 +8,7 @@ export interface IPokeball extends Document{
   catchRate: number;
   description: string;
   use(user_id: string):  Promise<void>;
+  price:  number;
 }
 
 function getRarity(catchRate: number) {
@@ -31,7 +32,7 @@ function getShiny () {
 
 const getLegendaryPokemon = async function (user_id: string) {
   const pokemon = await Pokemon.aggregate([
-    { $match: { isLegendary: true } },
+    { $match: { isLegendary: true, default: true } },
     { $sample: { size: 1 } },
   ]);
 
@@ -43,6 +44,8 @@ const getLegendaryPokemon = async function (user_id: string) {
     _id: undefined,
     createdDate: undefined,
     isShinny: getShiny(),
+    baseStats: pokemon[0].stats,
+    default: false
   });
   if (!newPokemon) throw new Error("Error creating pokemon");
   await User.updateOne(
@@ -54,7 +57,7 @@ const getLegendaryPokemon = async function (user_id: string) {
 };
 const getMythicalPokemon = async (user_id: string) => {
   const pokemon = await Pokemon.aggregate([
-    { $match: { isMythical: true } },
+    { $match: { isMythical: true, default: true  } },
     { $sample: { size: 1 } },
   ]);
   const newPokemon = await Pokemon.create({
@@ -65,6 +68,8 @@ const getMythicalPokemon = async (user_id: string) => {
     _id: undefined,
     createdDate: undefined,
     isShinny: getShiny(),
+    baseStats: pokemon[0].stats,
+    default: false
   });
   if (!newPokemon) throw new Error("Error creating pokemon");
   await User.updateOne(
@@ -75,7 +80,7 @@ const getMythicalPokemon = async (user_id: string) => {
 };
 const getCommonPokemon = async (user_id: string) => {
   const pokemon = await Pokemon.aggregate([
-    { $match: { isMythical: false, isLegendary: false } },
+    { $match: { isMythical: false, isLegendary: false, default: true } },
     { $sample: { size: 1 } },
   ]);
   const newPokemon = await Pokemon.create({
@@ -86,6 +91,8 @@ const getCommonPokemon = async (user_id: string) => {
     _id: undefined,
     createdDate: undefined,
     isShinny: getShiny(),
+    baseStats: pokemon[0].stats,
+    default: false
   });
   if (!newPokemon) throw new Error("Error creating pokemon");
   await User.updateOne(
@@ -106,6 +113,7 @@ const PokeballSchema: Schema<IPokeball> = new mongoose.Schema({
     type: String,
     required: true,
   },
+  price: {type: Number, required: true}
 });
 
 PokeballSchema.methods.use = async function (user_id: string) {

@@ -10,6 +10,7 @@ export const getPokemons = async (req: Request, res: Response) => {
       name,
       eggGroups,
       isShiny,
+      defaultPokemon,
       isEgg,
       moves,
       growthRate,
@@ -50,10 +51,12 @@ export const getPokemons = async (req: Request, res: Response) => {
       shape,
       color,
       owner,
+      defaultPokemon,
     };
 
     const filter: { [key: string]: any } = {};
-    for (const [key, value] of Object.entries(filters)) {
+    for (let [key, value] of Object.entries(filters)) {
+      if (key === "defaultPokemon") key = "default";
       if (value) {
         if (value === "true") filter[key] = true;
         if (value === "false") filter[key] = false;
@@ -61,7 +64,11 @@ export const getPokemons = async (req: Request, res: Response) => {
       }
     }
     //order
-    const sortField = sort ? (typeof sort === "string" ? sort : "createdDate") : "createdDate";
+    const sortField = sort
+      ? typeof sort === "string"
+        ? sort
+        : "createdDate"
+      : "createdDate";
     const sortOrder = order === "asc" ? order : "desc";
 
     //pagination
@@ -82,7 +89,7 @@ export const getPokemons = async (req: Request, res: Response) => {
     const count = await Pokemon.countDocuments(filter);
     const info = {
       pages: Math.ceil(count / limitResults),
-      count,  
+      count,
     };
 
     const results = await Pokemon.find(filter)
@@ -111,38 +118,6 @@ export const getPokemonById = async (req: Request, res: Response) => {
   }
 };
 
-export const sellPokemon = async (req: Request, res: Response) => {
-  const { user_id, pokemon_id, price, typeSale } = req.body;
-  try {
-    const user = await User.findById(user_id);
-    const pokemon = await Pokemon.findById(pokemon_id);
-    if (!user || !pokemon)
-      return res.status(404).json({ message: "User or Pokemon not found" });
-    if (user_id !== pokemon?.owner?.toString()) {
-      return res.status(400).json({ message: "You can't sell this pokemon" });
-    }
-
-    if (typeSale === "direct") {
-      user.coins += await pokemon.directSell();
-      user.pokemons = user.pokemons.filter((p) => !p.equals(pokemon._id));
-      await user.save();
-      return res.status(200).json({ message: "Pokemon sold", pokemon });
-    }
-    if (!price) return res.status(400).json({ message: "Price not found" });
-    if (typeSale === "p2p") {
-      await pokemon.p2pSell(price);
-      await user.save();
-      return res
-        .status(200)
-        .send({ message: "Pokemon put up for sale", pokemon });
-    }
-    return res.status(400).json({ message: "Type sale or price not found" });
-  } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: error });
-  }
-};
-
 export const claimLovePotion = async (req: Request, res: Response) => {
   const { user_id } = req.body;
   const { id } = req.params;
@@ -167,6 +142,21 @@ export const claimLovePotion = async (req: Request, res: Response) => {
     return res
       .status(200)
       .json({ message: "Love potions claimed", lovePotions });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: error });
+  }
+};
+
+export const lastedPokemonsForSale = async (req: Request, res: Response) => {
+  try {
+    const pokemons = await Pokemon.find({ onSale: true })
+      .sort({ onSaleDate: -1 })
+      .limit(10);
+
+    if (!pokemons)
+      return res.status(404).send({ mesagge: "Pokemons not found" });
+    return res.status(200).json(pokemons);
   } catch (error) {
     console.log(error);
     return res.status(500).json({ message: error });

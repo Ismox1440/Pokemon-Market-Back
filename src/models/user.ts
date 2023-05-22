@@ -1,4 +1,4 @@
-import mongoose, { Document, ObjectId } from "mongoose";
+import mongoose, { Document } from "mongoose";
 import { WeekGifts } from "./weekgifts";
 import { IPokemon } from "./pokemon";
 import { Item } from "./item";
@@ -14,6 +14,7 @@ export interface IUser extends Document {
   lastGiftDate?: Date;
   giftIndex?: number;
   coins: number;
+  description: string;
   claimDailyGift: () => Promise<void>;
 }
 
@@ -51,8 +52,9 @@ const userSchema = new mongoose.Schema<IUser>({
     },
   ],
   lastGiftDate: { type: Date, default: null },
-  giftIndex: { type: Number, default: 0 },
+  giftIndex: { type: Number, default: 1 },
   coins: { type: Number, default: 1000 },
+  description: { type: String, default: "" },
 });
 
 userSchema.methods.claimDailyGift = async function () {
@@ -67,15 +69,15 @@ userSchema.methods.claimDailyGift = async function () {
       .exec();
     if (!weekGifts) throw new Error("No week found");
     if (hoursDiff >= 24) {
-      const dayGift = weekGifts.days[this.giftIndex];
+      const dayGift = weekGifts.days[this.giftIndex - 1];
       this.lastGiftDate = now;
       this.giftIndex++;
       this.coins += dayGift.coins;
       dayGift.gifts.forEach((gift) => {
         if (gift.giftItemRef === "Pokeball") {
           const userPokeball = this.pokeballs.find(
-            (up: { count: number; pokeball: ObjectId }) =>
-              up.pokeball === gift.giftItem._id
+            (up: { count: number; pokeball: IPokeball }) =>
+              up.pokeball.equals(gift.giftItem._id)
           );
           if (userPokeball) userPokeball.count += gift.count;
           else
@@ -85,8 +87,8 @@ userSchema.methods.claimDailyGift = async function () {
             });
         } else {
           const userItem = this.items.find(
-            (ui: { count: number; item: ObjectId }) =>
-              ui.item === gift.giftItem._id
+            (ui: { count: number; item: Item }) =>
+              ui.item.equals(gift.giftItem._id)
           );
           if (userItem) userItem.count += gift.count;
           else this.items.push({ count: gift.count, item: gift.giftItem._id });

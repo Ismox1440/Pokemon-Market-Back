@@ -1,8 +1,9 @@
 import { Router } from "express";
-import { createPokeball } from "../controllers/pokeball.controler";
+import { createPokeball } from "../controllers/pokeball.controller";
+import { jwtCheck } from "../middleware/jwtCheck";
 
-const router = Router()
+const router = Router();
 
-router.post('/create', createPokeball)
+router.post("/create", jwtCheck, createPokeball);
 
 export default router;

@@ -1,8 +1,10 @@
 import { Router } from "express";
-import { createItem } from "../controllers/items.controller";
+import { createItem, getShop } from "../controllers/items.controller";
+import { jwtCheck } from "../middleware/jwtCheck";
 
-const router = Router()
+const router = Router();
 
-router.post('/create', createItem)
+router.post("/create", jwtCheck, createItem);
+router.get("/shop",jwtCheck,  getShop);
 
-export default router
+export default router;
