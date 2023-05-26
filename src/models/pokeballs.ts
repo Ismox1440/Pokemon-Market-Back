@@ -36,6 +36,8 @@ const getLegendaryPokemon = async function (user_id: string) {
     { $sample: { size: 1 } },
   ]);
 
+  const now = new Date()
+
   const newPokemon = await Pokemon.create({
     ...pokemon[0],
     pokeApiId: null,
@@ -45,7 +47,8 @@ const getLegendaryPokemon = async function (user_id: string) {
     createdDate: undefined,
     isShinny: getShiny(),
     baseStats: pokemon[0].stats,
-    default: false
+    default: false,
+    lastLovePotion: now
   });
   if (!newPokemon) throw new Error("Error creating pokemon");
   await User.updateOne(
@@ -60,6 +63,7 @@ const getMythicalPokemon = async (user_id: string) => {
     { $match: { isMythical: true, default: true  } },
     { $sample: { size: 1 } },
   ]);
+  const now = new Date()
   const newPokemon = await Pokemon.create({
     ...pokemon[0],
     pokeApiId: null,
@@ -69,7 +73,8 @@ const getMythicalPokemon = async (user_id: string) => {
     createdDate: undefined,
     isShinny: getShiny(),
     baseStats: pokemon[0].stats,
-    default: false
+    default: false,
+    lastLovePotion: now
   });
   if (!newPokemon) throw new Error("Error creating pokemon");
   await User.updateOne(
@@ -83,6 +88,7 @@ const getCommonPokemon = async (user_id: string) => {
     { $match: { isMythical: false, isLegendary: false, default: true } },
     { $sample: { size: 1 } },
   ]);
+  const now = new Date()
   const newPokemon = await Pokemon.create({
     ...pokemon[0],
     pokeApiId: null,
@@ -92,7 +98,8 @@ const getCommonPokemon = async (user_id: string) => {
     createdDate: undefined,
     isShinny: getShiny(),
     baseStats: pokemon[0].stats,
-    default: false
+    default: false,
+    lastLovePotion: now
   });
   if (!newPokemon) throw new Error("Error creating pokemon");
   await User.updateOne(
